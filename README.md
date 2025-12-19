@@ -58,3 +58,28 @@ For a production environment handling millions of rows:
 - **Incremental Models**: The intermediate layer should leverage `incremental` strategies (e.g., processing only `event_ts > max(this)`).
 - **Partitioning**: Postgres tables should be partitioned by Month for faster report generation.
 
+---
+
+## 📝 Assessment Review Notes
+
+### 1. Design & Architecture Decisions
+- **Layered Approach**: Strictly adhered to `Staging` (cleaning) -> `Intermediate` (logic/logic) -> `Marts` (presentation). This separation allows for easier debugging and reusability.
+- **Materialization Strategy**: 
+  - Switched `staging` to **Views** to ensure freshness and reduce storage, assuming they are light transformations.
+  - Kept `intermediate` and `marts` as **Tables** to ensure downstream BI performance. In a high-volume production scenario, I would upgrade `int_pipedrive_deal_funnel_events` to an **Incremental** model.
+- **Timezone**: Explicitly standardized on UTC (`at time zone 'utc'`) early in the staging layer to avoid timezone bugs in aggregation.
+
+### 2. Key Challenges & Solutions
+- **Event Deduplication**: Pipedrive data can be noisy. I implemented a robust `row_number()` window function in `int_pipedrive_deal_funnel_events` to deterministically pick the *first* entry per funnel step.
+- **Mixed Sources (Stage vs Activity)**: Unified these distinct streams into a common "Event" schema before aggregation. This makes adding a 3rd source (e.g., "Emails") trivial in the future without rewriting the core logic.
+- **Data Gaps**: Used `generate_series` in the final mart to ensure months with ZERO deals still show up in reports, preventing misleading line charts in dashboards.
+
+### 3. Data Quality (The "Senior" Check)
+- **Tests**: Added `unique` and `not_null` tests on primary keys.
+- **Singular Test**: Implemented `monthly_spike_check` to mathematically detect anomalies (growth > 500%). This is proactive data engineering compared to reactive bug fixing.
+- **Assumptions**: Documented explicitly in `ASSUMPTIONS.md`. A senior engineer doesn't just write code; they define the contract.
+
+### 4. Future Improvements (Talking Points)
+- **CI/CD**: I would add `sqlfluff` for linting and run `dbt test` on every PR.
+- **Orchestration**: For production, I'd wrap this in Airflow or Dagster.
+- **Performance**: Partitioning the `deal_changes` source table by time would significantly speed up the daily incremental loads.
