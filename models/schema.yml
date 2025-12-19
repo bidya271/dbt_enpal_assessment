@@ -1,0 +1,99 @@
+version: 2
+
+sources:
+  - name: postgres_public
+    description: "Raw CSV tables loaded from the Pipedrive dump used for modelling."
+    tables:
+      - name: deal_changes
+        description: "Event log of changes to deals (used to derive stage entry timestamps)."
+      - name: stages
+        description: "Pipeline stages / stage lookup table."
+      - name: activity
+        description: "Activity records (calls, follow-ups) used to detect call events."
+      - name: activity_types
+        description: "Lookup table for activity type names."
+      - name: users
+        description: "Users / sales reps metadata."
+      - name: fields
+        description: "Field metadata."
+
+models:
+
+  - name: stg_deal_changes
+    description: "Staging model: typed and cleaned event log for deal changes. Provides new_stage_id/new_user_id when relevant."
+    columns:
+      - name: deal_id
+        description: "Primary identifier for the deal in the CRM."
+        tests:
+          - not_null
+      - name: change_time
+        description: "Event timestamp when the change occurred."
+        tests:
+          - not_null
+      - name: changed_field_key
+        description: "The field that changed (e.g., stage_id, user_id)."
+  - name: stg_stages
+    description: "Staging model: normalized stage names mapped to canonical funnel steps."
+    columns:
+      - name: stage_id
+        description: "Stage identifier."
+        tests:
+          - not_null
+          - unique
+      - name: funnel_step
+        description: "Canonical funnel step name used for reporting (e.g., 'Lead Generation', 'Qualified Lead')."
+        tests:
+          - not_null
+
+  - name: stg_activity_types
+    description: "Staging model for activity types (maps raw type codes to human-readable names)."
+    columns:
+      - name: activity_type_id
+        tests:
+          - not_null
+          - unique
+      - name: activity_type_name
+        description: "Readable activity name (e.g., 'Sales Call 1')."
+
+  - name: stg_activity
+    description: "Staging model for activities enriched with activity type names."
+    columns:
+      - name: activity_id
+        tests:
+          - not_null
+          - unique
+      - name: deal_id
+        description: "Deal associated with the activity."
+  - name: int_pipedrive_deal_funnel_events
+    description: "Intermediate model capturing the first timestamp a deal entered each canonical funnel step. Grain: deal_id, funnel_step."
+    columns:
+      - name: deal_id
+        description: "Deal identifier."
+        tests:
+          - not_null
+      - name: funnel_step
+        description: "Canonical funnel step name."
+        tests:
+          - not_null
+      - name: step_entered_at
+        description: "Timestamp when the deal first entered this funnel step."
+        tests:
+          - not_null
+
+  - name: rep_sales_funnel_monthly
+    description: "Final reporting mart: monthly counts of deals entering each funnel step. Columns: month, kpi_name, funnel_step, deals_count."
+    columns:
+      - name: month
+        description: "Month (first day) for aggregation (date)."
+        tests:
+          - not_null
+      - name: kpi_name
+        description: "Fixed KPI label for the report (e.g., 'sales_funnel_deals_entered')."
+      - name: funnel_step
+        description: "Canonical funnel step name."
+        tests:
+          - not_null
+      - name: deals_count
+        description: "Count of distinct deals that entered the funnel step during the month."
+        tests:
+          - not_null
