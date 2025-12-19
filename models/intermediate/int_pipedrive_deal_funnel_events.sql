@@ -32,14 +32,16 @@ stage_events as (
   select
     sfe.deal_id,
     sfe.stage_id,
-    s.funnel_step,
+    -- FALLBACK: if the canonical mapping is missing, use the raw stage_name (if available)
+    coalesce(s.funnel_step, 'raw_stage_' || coalesce(s.stage_id::text, 'unknown')) as funnel_step,
     sfe.event_ts_utc,
     sfe.change_id,
     'stage' as event_source
   from stage_first_entries sfe
-  join {{ ref('stg_stages') }} s
+  left join {{ ref('stg_stages') }} s
     on sfe.stage_id = s.stage_id
 ),
+
 
 -- 3. activity-based funnel steps (Sales Call 1 / 2, etc.)
 activity_call_events as (
