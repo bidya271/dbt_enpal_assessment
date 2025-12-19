@@ -64,21 +64,24 @@ models:
           - unique
       - name: deal_id
         description: "Deal associated with the activity."
+        
   - name: int_pipedrive_deal_funnel_events
-    description: "Intermediate model capturing the first timestamp a deal entered each canonical funnel step. Grain: deal_id, funnel_step."
+    description: "Canonical first-entry events per deal and canonical funnel step."
     columns:
       - name: deal_id
-        description: "Deal identifier."
         tests:
           - not_null
       - name: funnel_step
-        description: "Canonical funnel step name."
         tests:
           - not_null
       - name: step_entered_at
-        description: "Timestamp when the deal first entered this funnel step."
         tests:
           - not_null
+    tests:
+      - unique:
+          combination:
+            - deal_id
+            - funnel_step
 
   - name: rep_sales_funnel_monthly
     description: "Final reporting mart: monthly counts of deals entering each funnel step. Columns: month, kpi_name, funnel_step, deals_count."
