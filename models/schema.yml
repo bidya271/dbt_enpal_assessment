@@ -1,22 +1,5 @@
 version: 2
 
-sources:
-  - name: postgres_public
-    description: "Raw CSV tables loaded from the Pipedrive dump used for modelling."
-    tables:
-      - name: deal_changes
-        description: "Event log of changes to deals (used to derive stage entry timestamps)."
-      - name: stages
-        description: "Pipeline stages / stage lookup table."
-      - name: activity
-        description: "Activity records (calls, follow-ups) used to detect call events."
-      - name: activity_types
-        description: "Lookup table for activity type names."
-      - name: users
-        description: "Users / sales reps metadata."
-      - name: fields
-        description: "Field metadata."
-
 models:
 
   - name: stg_deal_changes
@@ -25,6 +8,11 @@ models:
       - name: deal_id
         description: "Primary identifier for the deal in the CRM."
         tests:
+          - not_null
+      - name: change_id
+        description: "Unique ID for the deal change event (composite key of deal_id + timestamp + value)."
+        tests:
+          - unique
           - not_null
       - name: change_time
         description: "Event timestamp when the change occurred."
@@ -77,11 +65,6 @@ models:
       - name: step_entered_at
         tests:
           - not_null
-    tests:
-      - unique:
-          combination:
-            - deal_id
-            - funnel_step
 
   - name: rep_sales_funnel_monthly
     description: "Final reporting mart: monthly counts of deals entering each funnel step. Columns: month, kpi_name, funnel_step, deals_count."

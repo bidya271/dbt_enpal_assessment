@@ -17,4 +17,4 @@ select
     name as activity_type_name,
     active,
     type as activity_type_code
-from source;
+from source

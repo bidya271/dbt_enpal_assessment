@@ -1,18 +1,21 @@
 
-## Canonical definitions
-- "Entered a funnel step": first canonical event where either a stage change maps to the funnel step OR an activity maps to the funnel step. We select the earliest timestamp, normalized to UTC.
-- Tie-breaker: if multiple events have identical timestamps, prefer stage-based events, then use the stable row id (change_id or activity_id) to break ties deterministically.
-- Re-entries: we count only the first time a deal entered a funnel step (historical re-entries not counted). For re-entry analysis, a separate metric/model should be created.
+## Business Logic & Funnel Definitions
+- **Funnel Entry Definition**: A deal "enters" a funnel step at the *earliest* timestamp where an event (stage change or activity) maps to that step.
+- **Mixed Event Sources**: 
+    - **Stage Changes**: The primary driver. Mapping is maintained in `stg_stages`. 
+    - **Activities**: Used for granular steps (e.g., "Sales Call 1", "Sales Call 2"). We parse `activity_type_name` to infer these steps. 
+    - **Conflict Resolution**: If a deal has both a stage change and an activity mapping to the same step, the *earlier* event wins. If timestamps are identical, stage changes get priority.
+- **Re-entries**: The current model logic (`int_pipedrive_deal_funnel_events`) counts only the *first* entry per deal per step. Subsequent re-entries (e.g., moving back and forth) are ignored for this specific "Funnel Conversion" view.
+- **Timezone Standardization**: All timestamps (`change_time`, `due_to`) are converted to UTC explicitly before logic application to ensure consistency across global teams.
 
-## Timestamp handling
-- All timestamps are normalized to UTC (`AT TIME ZONE 'UTC'`) before deduplication and aggregation.
-- When event timestamp is null, the event is excluded (we prefer explicit exclusion and a test to surface missing timestamps).
+## Data Quality & Integrity
+- **Missing Timestamps**: Events with `NULL` timestamps are effectively useless for funnel analysis and are excluded. We rely on (`not_null`) tests to flag if this becomes a systemic issue.
+- **Duplicate Events**: The source data (`deal_changes`) is an immutable log. We assume valid distinct events based on `(deal_id, unique_event_id)`. We prioritize robustness by using `row_number()` to deduplicate effectively at the grain of `(deal_id, funnel_step)`.
+- **Orphaned Data**: Activities or changes without a valid `deal_id` are excluded via inner joins or `not_null` filters.
 
-## Stage/Activity mappings
-- Stage -> funnel_step mapping is maintained in `stg_stages`. Edit `stg_stages` to change mappings rather than changing SQL logic.
-- Activity -> funnel_step mappings are currently detected in `int_pipedrive_deal_funnel_events` by searching `activity_type_name`. For production, centralize this mapping in `stg_activity_types`.
-
-## Production notes
-- For large production datasets, consider:
-  - Adding partial indexes on `(deal_id, event_ts)` in the source table to speed first-entry retrievals.
-  - Materializing `int_pipedrive_deal_funnel_events` as an incremental model with a stable `unique_key` if the dataset grows.
+## Architecture & Scaling Considerations
+- **Materialization Strategy**: 
+    - `staging` models are standard Views (or Tables in this assessment for simplicity) to provide a clean interface to raw data.
+    - `intermediate` and `marts` are materialized as Tables to prioritize query performance for BI tools.
+    - **Future Improvement**: For high-volume production, `int_pipedrive_deal_funnel_events` is a prime candidate for an *Incremental Model* strategy, partitioning by `event_ts_utc`.
+- **Hardcoded Mappings**: Activity string matching (`LIKE '%Sales Call 1%'`) is brittle. In a production environment, we would recommend a cleaner upstream data contract (e.g., explicit `funnel_step_id` or a dedicated reference table) to avoid "magic strings" in SQL.
