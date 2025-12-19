@@ -6,3 +6,14 @@ sources:
     schema: public
     tables:
       - name: activity
+        description: "Raw activities logged in Pipedrive (calls, follow-ups, etc.)."
+      - name: activity_types
+        description: "Lookup of activity types and names (e.g. Sales Call 1, Sales Call 2, Follow Up Call)."
+      - name: deal_changes
+        description: "Event log of all changes to deals over time (stage changes, user changes, add_time, etc.)."
+      - name: fields
+        description: "Metadata about fields used in Pipedrive (field keys, names, value options)."
+      - name: stages
+        description: "Definition of pipeline stages, mapped to the business funnel steps."
+      - name: users
+        description: "Users / sales reps using the CRM."
