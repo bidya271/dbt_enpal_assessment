@@ -20,14 +20,13 @@ months as (
   from bounds
 ),
 
--- Explicit definition of the Funnel Hierarchy to ensure correct sorting and completeness
 funnel_hierarchy as (
     select * from (values 
         (1, 'Lead Generation'),
         (2, 'Qualified Lead'),
-        (3, 'Sales Call 1'), -- 2.1 in requirements, but strictly follows Qualified Lead
+        (3, 'Sales Call 1'), 
         (4, 'Needs Assessment'),
-        (5, 'Sales Call 2'), -- 3.1 in requirements
+        (5, 'Sales Call 2'),
         (6, 'Proposal/Quote Preparation'),
         (7, 'Negotiation'),
         (8, 'Closing'),
@@ -37,7 +36,6 @@ funnel_hierarchy as (
     ) as t(step_order, funnel_step)
 ),
 
--- Skeleton: Every step for every month
 skeleton as (
     select
         m.month,

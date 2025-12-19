@@ -17,7 +17,6 @@
 ) }}
 
 with
--- Stage change candidate events: normalized timestamp, typed ids
 stage_changes as (
   select
     deal_id,
@@ -35,7 +34,6 @@ stage_changes as (
     and new_stage_id is not null
 ),
 
--- map stage_id -> canonical funnel_step (fall back to raw label if missing)
 stage_events as (
   select
     sc.deal_id,
@@ -49,7 +47,6 @@ stage_events as (
     on sc.new_stage_id = s.stage_id
 ),
 
--- activity-based funnel steps (Sales Call 1 / 2, etc.)
 activity_call_events as (
   select
     a.deal_id,
@@ -70,14 +67,12 @@ activity_call_events as (
     )
 ),
 
--- union candidate events
 union_all_events as (
   select deal_id, funnel_step, event_ts_utc, source_id, event_source from stage_events
   union all
   select deal_id, funnel_step, event_ts_utc, source_id, event_source from activity_call_events
 ),
 
--- filter and rank: deterministic first-entry per deal + funnel_step
 ranked as (
   select
     u.deal_id,
