@@ -1,1 +1,8 @@
-git commit -m "Submission: dbt sales funnel models, sources, schema, and documentation"
+target/
+dbt_packages/
+logs/
+.venv/
+.DS_Store
+.user.yml
+secrets.env
+*.bak

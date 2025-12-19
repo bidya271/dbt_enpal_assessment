@@ -1,34 +1,60 @@
-## Setup
+# Enpal Senior BI Assessment - Pipedrive Analysis
 
-1. Download Docker Desktop (if you don’t have installed) using the official website, install and launch.
-2. Fork this Github project to you Github account. Clone the forked repo to your device.
-3. Open your Command Prompt or Terminal, navigate to that folder, and run the command `docker compose up`.
-4. Now you have launched a local Postgres database with the following credentials:
- ```
-    Host: localhost
-    User: admin
-    Password: admin
-    Port: 5432 
-```
-5. Connect to the db via a preferred tool (e.g. DataGrip, Dbeaver etc)
-6. Install dbt-core and dbt-postgres using pip (if you don’t have) on your preferred environment.
-7. Now you can run `dbt run` with the test model and check public_pipedrive_analytics schema to see the dbt result (with one test model)
+## Overview
+This project transforms raw Pipedrive CRM data into a clean, actionable Sales Funnel report using **dbt**, **Postgres**, and **Docker**. 
 
-## Project
-1. Remove the test model once you make sure it works
-2. Dive deep into the Pipedrive CRM source data to gain a thorough understanding of all its details. (You may also research the Pipedrive CRM tool terms).
-3. Define DBT sources and build the necessary layers organizing the data flow for optimal relevance and maintainability.
-4. Build a reporting model (rep_sales_funnel_monthly) with monthly intervals, incorporating the following funnel steps (KPIs):  
-  &nbsp;&nbsp;&nbsp;Step 1: Lead Generation  
-  &nbsp;&nbsp;&nbsp;Step 2: Qualified Lead  
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 2.1: Sales Call 1  
-  &nbsp;&nbsp;&nbsp;Step 3: Needs Assessment  
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Step 3.1: Sales Call 2  
-  &nbsp;&nbsp;&nbsp;Step 4: Proposal/Quote Preparation  
-  &nbsp;&nbsp;&nbsp;Step 5: Negotiation  
-  &nbsp;&nbsp;&nbsp;Step 6: Closing  
-  &nbsp;&nbsp;&nbsp;Step 7: Implementation/Onboarding  
-  &nbsp;&nbsp;&nbsp;Step 8: Follow-up/Customer Success  
-  &nbsp;&nbsp;&nbsp;Step 9: Renewal/Expansion
-5. Column names of the reporting model: `month`, `kpi_name`, `funnel_step`, `deals_count`
-6. “Git commit” all the changes and create a PR to your forked repo (not the original one). Send your repo link to us.
+The goal is to provide a robust analytics foundation that tracks deals as they move through funnel steps (Lead Generation -> Closing), handling complexities like mixed event sources (Stage Changes vs. Activities) and timezone normalization.
+
+## 🏗 Architecture & Design Logic
+The project follows a modular "Modern Data Stack" layer approach:
+
+1.  **Staging (`models/staging`)**:
+    *   1:1 mapping with source tables.
+    *   Type casting (e.g., timestamps to UTC) and column renaming for consistency.
+    *   *Decision*: Light transformations only; keep close to raw for debuggability.
+
+2.  **Intermediate (`models/intermediate`)**:
+    *   `int_pipedrive_deal_funnel_events`: The core logic engine. 
+    *   Combines `stage_changes` and `activities` into a single "Funnel Event" stream.
+    *   Handles deduplication (finding the *first* time a deal hit a step).
+    *   *Decision*: Materialized as a Table to improve downstream performance, acting as a reliable "Fact Table" for funnel analysis.
+
+3.  **Marts (`models/marts`)**:
+    *   `rep_sales_funnel_monthly`: Aggregates the intermediate events into a monthly report.
+    *   Fills in missing months (using `generate_series`) to ensure continuous reporting even for low-volume periods.
+
+## 🛠 Tech Stack & Setup
+- **dbt Core**: Transformation & Testing.
+- **Postgres 15**: Data Warehouse (running in Docker).
+- **Docker Compose**: Container orchestration.
+
+### Quick Start
+1.  **Prerequisites**: Docker Desktop installed.
+2.  **Launch Database**: 
+    ```bash
+    docker compose up -d
+    ```
+    *Note: Exposes Postgres on port `15432` (mapped to container 5432).*
+3.  **Install Dependencies**:
+    ```bash
+    # (Assuming python venv is active)
+    pip install dbt-postgres
+    dbt deps
+    ```
+4.  **Run Pipeline**:
+    ```bash
+    dbt build
+    ```
+    *(Runs seeds, models, and tests in order)*
+
+## ✅ Quality Assurance
+- **Testing**: 
+    - Added `not_null` and `unique` constraints on all primary keys.
+    - Custom Singular Test (`monthly_spike_check`) monitors data stability (alerts if month-over-month growth exceeds 500%).
+- **Documentation**: Assumes `dbt docs generate` will be part of the CI/CD pipeline.
+
+## 🚀 Scaling Thoughts
+For a production environment handling millions of rows:
+- **Incremental Models**: The intermediate layer should leverage `incremental` strategies (e.g., processing only `event_ts > max(this)`).
+- **Partitioning**: Postgres tables should be partitioned by Month for faster report generation.
+

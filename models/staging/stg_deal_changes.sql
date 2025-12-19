@@ -5,6 +5,7 @@ with source as (
 
     select
         deal_id,
+        md5(concat(coalesce(deal_id::text,''),'|',coalesce(change_time::text,''),'|',coalesce(new_value::text,''))) as change_id,
         change_time,
         changed_field_key,
         new_value
@@ -15,6 +16,7 @@ with source as (
 typed as (
 
     select
+        change_id,
         deal_id,
         change_time::timestamp as change_time,
         changed_field_key,
@@ -35,4 +37,4 @@ typed as (
 )
 
 select *
-from typed;
+from typed

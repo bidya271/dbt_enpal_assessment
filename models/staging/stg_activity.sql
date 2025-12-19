@@ -46,4 +46,4 @@ joined as (
 )
 
 select *
-from joined;
+from joined

@@ -40,4 +40,4 @@ select
 from months m
 left join monthly_agg ma
   on ma.month = m.month
-order by m.month desc, funnel_step;
+order by m.month desc, funnel_step

@@ -11,7 +11,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
       - ./raw_data:/raw_data  # Mount raw_data folder to access CSV files
     ports:
-      - "5432:5432"
+      - "15432:5432"
 
   data_loader:
     image: postgres:latest

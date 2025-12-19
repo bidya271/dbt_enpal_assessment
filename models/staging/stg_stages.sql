@@ -34,4 +34,4 @@ normalized as (
 )
 
 select *
-from normalized;
+from normalized
