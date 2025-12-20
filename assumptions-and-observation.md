@@ -1,4 +1,3 @@
-
 ## Business Logic & Funnel Definitions
 - **Funnel Entry Definition**: A deal "enters" a funnel step at the *earliest* timestamp where an event (stage change or activity) maps to that step.
 - **Mixed Event Sources**: 
@@ -9,8 +8,8 @@
 - **Timezone Standardization**: All timestamps (`change_time`, `due_to`) are converted to UTC explicitly before logic application to ensure consistency across global teams.
 
 ## Data Quality & Integrity
-- **Missing Timestamps**: Events with `NULL` timestamps are effectively useless for funnel analysis and are excluded. We rely on (`not_null`) tests to flag if this becomes a systemic issue.
-- **Duplicate Events**: The source data (`deal_changes`) is an immutable log. We assume valid distinct events based on `(deal_id, unique_event_id)`. We prioritize robustness by using `row_number()` to deduplicate effectively at the grain of `(deal_id, funnel_step)`.
+- **Missing Timestamps**: Events with `NULL` timestamps are effectively useless for funnel analysis and are excluded. I have added (`not_null`) tests to flag if this becomes a systemic issue.
+- **Duplicate Events**: The source data (`deal_changes`) is an immutable log. I assumed valid distinct events based on `(deal_id, unique_event_id)`. Hence, I used `row_number()` to deduplicate effectively at the grain of `(deal_id, funnel_step)`.
 - **Orphaned Data**: Activities or changes without a valid `deal_id` are excluded via inner joins or `not_null` filters.
 
 ## Architecture & Scaling Considerations
