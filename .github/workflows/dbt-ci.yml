@@ -8,7 +8,7 @@ on:
 
 jobs:
   dbt-pr:
-    name: PR: compile + test (fast)
+    name: "PR: compile + test (fast)"
     runs-on: ubuntu-latest
     services:
       postgres:
