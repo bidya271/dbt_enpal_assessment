@@ -51,7 +51,18 @@ jobs:
 
       - name: Write profiles.yml
         run: |
-          printf "enpal_assessment_project:\n  target: dev\n  outputs:\n    dev:\n      type: postgres\n      host: localhost\n      user: admin\n      port: 5432\n      password: admin\n      dbname: postgres\n      schema: public_pipedrive_analytics\n      threads: 1\n" > profiles.yml
+          echo "enpal_assessment_project:" > profiles.yml
+          echo "  target: dev" >> profiles.yml
+          echo "  outputs:" >> profiles.yml
+          echo "    dev:" >> profiles.yml
+          echo "      type: postgres" >> profiles.yml
+          echo "      host: localhost" >> profiles.yml
+          echo "      user: admin" >> profiles.yml
+          echo "      port: 5432" >> profiles.yml
+          echo "      password: admin" >> profiles.yml
+          echo "      dbname: postgres" >> profiles.yml
+          echo "      schema: public_pipedrive_analytics" >> profiles.yml
+          echo "      threads: 1" >> profiles.yml
 
       - name: dbt deps (if you use packages)
         run: dbt deps --profiles-dir .
@@ -110,7 +121,18 @@ jobs:
 
       - name: Write profiles.yml
         run: |
-          printf "enpal_assessment_project:\n  target: dev\n  outputs:\n    dev:\n      type: postgres\n      host: localhost\n      user: admin\n      port: 5432\n      password: admin\n      dbname: postgres\n      schema: public_pipedrive_analytics\n      threads: 1\n" > profiles.yml
+          echo "enpal_assessment_project:" > profiles.yml
+          echo "  target: dev" >> profiles.yml
+          echo "  outputs:" >> profiles.yml
+          echo "    dev:" >> profiles.yml
+          echo "      type: postgres" >> profiles.yml
+          echo "      host: localhost" >> profiles.yml
+          echo "      user: admin" >> profiles.yml
+          echo "      port: 5432" >> profiles.yml
+          echo "      password: admin" >> profiles.yml
+          echo "      dbname: postgres" >> profiles.yml
+          echo "      schema: public_pipedrive_analytics" >> profiles.yml
+          echo "      threads: 1" >> profiles.yml
 
       - name: dbt deps
         run: dbt deps --profiles-dir .
