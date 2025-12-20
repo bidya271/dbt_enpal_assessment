@@ -23,7 +23,13 @@ typed as (
         done,
         due_to::timestamp as due_to,
         type as activity_type_code
-    from source
+    from (
+        select 
+            *,
+            row_number() over (partition by activity_id order by due_to desc) as rn
+        from source
+    ) s
+    where rn = 1
 
 ),
 

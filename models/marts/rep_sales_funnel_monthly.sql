@@ -1,7 +1,3 @@
--- models/marts/rep_sales_funnel_monthly.sql
--- Purpose: Monthly aggregated funnel report: month, kpi_name, funnel_step, deals_count
--- Source: int_pipedrive_deal_funnel_events (canonical first-entry events)
-
 with events as (
   select
     deal_id,
@@ -11,6 +7,7 @@ with events as (
   where step_entered_at is not null
 ),
 
+-- Bounds for date generation
 bounds as (
   select
     coalesce(date_trunc('month', min(event_ts_utc)), date_trunc('month', now() - interval '12 months'))::date as min_month,
@@ -23,6 +20,31 @@ months as (
   from bounds
 ),
 
+funnel_hierarchy as (
+    select * from (values 
+        (1, 'Lead Generation'),
+        (2, 'Qualified Lead'),
+        (3, 'Sales Call 1'), 
+        (4, 'Needs Assessment'),
+        (5, 'Sales Call 2'),
+        (6, 'Proposal/Quote Preparation'),
+        (7, 'Negotiation'),
+        (8, 'Closing'),
+        (9, 'Implementation/Onboarding'),
+        (10, 'Follow-up/Customer Success'),
+        (11, 'Renewal/Expansion')
+    ) as t(step_order, funnel_step)
+),
+
+skeleton as (
+    select
+        m.month,
+        fh.funnel_step,
+        fh.step_order
+    from months m
+    cross join funnel_hierarchy fh
+),
+
 monthly_agg as (
   select
     date_trunc('month', e.event_ts_utc)::date as month,
@@ -33,11 +55,12 @@ monthly_agg as (
 )
 
 select
-  m.month,
+  s.month,
   'sales_funnel_deals_entered' as kpi_name,
-  coalesce(ma.funnel_step, 'no_step') as funnel_step,
+  s.funnel_step,
   coalesce(ma.deals_count, 0) as deals_count
-from months m
+from skeleton s
 left join monthly_agg ma
-  on ma.month = m.month
-order by m.month desc, funnel_step
+  on s.month = ma.month
+  and s.funnel_step = ma.funnel_step
+order by s.month desc, s.step_order asc
