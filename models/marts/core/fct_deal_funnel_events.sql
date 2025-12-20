@@ -1,7 +1,7 @@
 /*
-  models/intermediate/int_pipedrive_deal_funnel_events.sql
+  models/marts/core/fct_deal_funnel_events.sql
 
-  Incremental canonical first-entry events per deal + funnel_step.
+  Fact Table: Canonical first-entry events per deal + funnel_step.
 
   Strategy:
   - Build a deterministic "deal_step_fingerprint" for each candidate event

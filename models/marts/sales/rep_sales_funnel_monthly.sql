@@ -3,7 +3,7 @@ with events as (
     deal_id,
     funnel_step,
     step_entered_at::timestamptz at time zone 'utc' as event_ts_utc
-  from {{ ref('int_pipedrive_deal_funnel_events') }}
+  from {{ ref('fct_deal_funnel_events') }}
   where step_entered_at is not null
 ),
 

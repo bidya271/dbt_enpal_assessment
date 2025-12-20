@@ -38,9 +38,9 @@ models:
     staging:
       +materialized: view
       
-    intermediate:
-      +materialized: table
-      +post-hook: "create unique index if not exists idx_int_deal_step_fingerprint on {{ this }} (deal_step_fingerprint);"
-      
+
     marts:
       +materialized: table
+      core:
+        fct_deal_funnel_events:
+          +post-hook: "create unique index if not exists idx_fct_deal_step_fingerprint on {{ this }} (deal_step_fingerprint);"

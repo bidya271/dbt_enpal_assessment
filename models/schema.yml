@@ -53,7 +53,7 @@ models:
       - name: deal_id
         description: "Deal associated with the activity."
         
-  - name: int_pipedrive_deal_funnel_events
+  - name: fct_deal_funnel_events
     description: "Canonical first-entry events per deal and canonical funnel step."
     columns:
       - name: deal_id
