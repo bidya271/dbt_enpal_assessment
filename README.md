@@ -12,15 +12,15 @@ The goal is to provide a robust analytics foundation that tracks deals as they m
     *   Type casting (e.g., timestamps to UTC) and column renaming for consistency.
     *   Decision: Will stick to Light transformations only as per the project requirements to keep close to raw for debuggability.
 
-2.  **Intermediate (`models/intermediate`)**:
-    *   `int_pipedrive_deal_funnel_events`: The core logic engine. 
-    *   Combines `stage_changes` and `activities` into a single "Funnel Event" stream.
-    *   Handles deduplication (finding the *first* time a deal hit a step based on the keys).
-    *   Decision: Materialized as a Table to improve downstream performance, acting as a reliable "Fact Table" for funnel analysis.
-
-3.  **Marts (`models/marts`)**:
-    *   `rep_sales_funnel_monthly`: Aggregates the intermediate events into a monthly report.
-    *   Fills in missing months (using `generate_series`) to ensure continuous reporting even for low-volume periods.
+2.  **Marts (`models/marts`)**:
+    *   **Core (`models/marts/core`)**:
+        *   `fct_deal_funnel_events`: The core **Fact Table**.
+        *   Combines `stage_changes` and `activities` into a single "Funnel Event" stream.
+        *   Handles deduplication (finding the *first* time a deal hit a step based on the keys).
+        *   Materialized as an **Incremental Table** for performance at scale.
+    *   **Sales (`models/marts/sales`)**:
+        *   `rep_sales_funnel_monthly`: Aggregates the fact events into a monthly report.
+        *   Fills in missing months (using `generate_series`) to ensure continuous reporting even for low-volume periods.
 
 ## Tech Stack & Setup
 - **dbt Core**: Transformation & Testing.
