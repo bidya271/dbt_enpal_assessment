@@ -1,0 +1,5 @@
+id,name,active,type
+1,Sales Call 1,Yes,meeting
+2,Sales Call 2,Yes,sc_2
+3,Follow Up Call,No,follow_up
+4,After Close Call,Yes,after_close_call

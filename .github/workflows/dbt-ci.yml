@@ -8,7 +8,7 @@ on:
 
 jobs:
   dbt-pr:
-    name: PR: compile + test (fast)
+    name: "PR: compile + test (fast)"
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -33,12 +33,16 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
       - name: Wait for Postgres (hosted service)
         run: |
           echo "Waiting for Postgres to be ready..."
-          for i in {1..30}; do
-            pg_isready -h localhost -p 5432 -U admin && break
+          until pg_isready -h localhost -p 5432 -U admin; do
             sleep 2
           done
         env:
@@ -47,39 +51,43 @@ jobs:
       - name: Install dbt and adapter
         run: |
           python -m pip install --upgrade pip
-          pip install dbt-core==1.10.16 dbt-postgres==1.9.1 psycopg2-binary
+          pip install dbt-core==1.8.0 dbt-postgres==1.8.0 psycopg2-binary
+      
+      - name: Create Schema
+        run: |
+          PGPASSWORD=admin psql -h localhost -U admin -d postgres -c "create schema if not exists public_pipedrive_analytics;"
 
       - name: Write profiles.yml
+        # Note: We use schema 'public' for seeds to match the source definition in CI environment
         run: |
-          cat > profiles.yml <<'YML'
-          enpal_assessment_project:
-            target: dev
-            outputs:
-              dev:
-                type: postgres
-                host: localhost
-                user: admin
-                port: 5432
-                password: admin
-                dbname: postgres
-                schema: public_pipedrive_analytics
-                threads: 1
-YML
+          echo "enpal_assessment_project:" > profiles.yml
+          echo "  target: dev" >> profiles.yml
+          echo "  outputs:" >> profiles.yml
+          echo "    dev:" >> profiles.yml
+          echo "      type: postgres" >> profiles.yml
+          echo "      host: localhost" >> profiles.yml
+          echo "      user: admin" >> profiles.yml
+          echo "      port: 5432" >> profiles.yml
+          echo "      password: admin" >> profiles.yml
+          echo "      dbname: postgres" >> profiles.yml
+          echo "      schema: public" >> profiles.yml
+          echo "      threads: 1" >> profiles.yml
 
-      - name: dbt deps (if you use packages)
+      - name: dbt deps
         run: dbt deps --profiles-dir .
 
-      - name: dbt seed (if seeds present; safe to run)
-        run: dbt seed --profiles-dir . --select +seeds --threads 1 || true
+      - name: dbt seed (Load Test Data)
+        run: dbt seed --profiles-dir .
+        # This loads the CSVs from /seeds into the 'public' schema, mocking the raw data source.
 
-      - name: dbt compile
-        run: dbt compile --profiles-dir .
+      - name: dbt run
+        run: dbt run --profiles-dir .
 
       - name: dbt test
         run: dbt test --profiles-dir .
 
   dbt-main:
-    name: main branch: full run
+    name: "main branch: full run"
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     services:
@@ -106,11 +114,15 @@ YML
         with:
           python-version: '3.11'
 
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
       - name: Wait for Postgres
         run: |
           echo "Waiting for Postgres to be ready..."
-          for i in {1..30}; do
-            pg_isready -h localhost -p 5432 -U admin && break
+          until pg_isready -h localhost -p 5432 -U admin; do
             sleep 2
           done
         env:
@@ -119,30 +131,40 @@ YML
       - name: Install dbt and adapter
         run: |
           python -m pip install --upgrade pip
-          pip install dbt-core==1.10.16 dbt-postgres==1.9.1 psycopg2-binary
+          pip install dbt-core==1.8.0 dbt-postgres==1.8.0 psycopg2-binary
+          
+      - name: Create Schema
+        run: |
+          PGPASSWORD=admin psql -h localhost -U admin -d postgres -c "create schema if not exists public_pipedrive_analytics;"
 
       - name: Write profiles.yml
+        # Note: We use schema 'public' for seeds so sources work, but wait - 
+        # dbt run creates models. If schema is public, models land in public.
+        # But stg models SELECT FROM source.
+        # If schema is public, dbt seeds create table in public. Source("postgres_public", "activity") -> public.activity.
+        # Stg models -> create view public.stg_activity.
+        # This collision is fine for CI. OR we can use target schema 'public_pipedrive_analytics' for models
+        # and configure seeds to go to public.
+        # SIMPLER: Use schema 'public' for everything in CI. It's a throwaway DB.
         run: |
-          cat > profiles.yml <<'YML'
-          enpal_assessment_project:
-            target: dev
-            outputs:
-              dev:
-                type: postgres
-                host: localhost
-                user: admin
-                port: 5432
-                password: admin
-                dbname: postgres
-                schema: public_pipedrive_analytics
-                threads: 1
-YML
+          echo "enpal_assessment_project:" > profiles.yml
+          echo "  target: dev" >> profiles.yml
+          echo "  outputs:" >> profiles.yml
+          echo "    dev:" >> profiles.yml
+          echo "      type: postgres" >> profiles.yml
+          echo "      host: localhost" >> profiles.yml
+          echo "      user: admin" >> profiles.yml
+          echo "      port: 5432" >> profiles.yml
+          echo "      password: admin" >> profiles.yml
+          echo "      dbname: postgres" >> profiles.yml
+          echo "      schema: public" >> profiles.yml
+          echo "      threads: 1" >> profiles.yml
 
       - name: dbt deps
         run: dbt deps --profiles-dir .
 
-      - name: dbt seed (if any)
-        run: dbt seed --profiles-dir . --select +seeds --threads 1 || true
+      - name: dbt seed
+        run: dbt seed --profiles-dir .
 
       - name: Full dbt run
         run: dbt run --profiles-dir .

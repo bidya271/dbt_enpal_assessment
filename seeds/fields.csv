@@ -1,0 +1,5 @@
+ID,FIELD_KEY,NAME,FIELD_VALUE_OPTIONS
+13,add_time,Deal created,
+3,user_id,Owner,
+10,stage_id,Stage,"[{""id"": ""1"", ""label"": ""Lead Generation""},{""id"": ""2"", ""label"": ""Qualified Lead""},{""id"": ""3"", ""label"": ""Needs Assessment""},{""id"": ""4"", ""label"": ""Proposal/Quote Preparation""},{""id"": ""5"", ""label"": ""Negotiation""},{""id"": ""6"", ""label"": ""Closing""},{""id"": ""7"", ""label"": ""Implementation/Onboarding""},{""id"": ""8"", ""label"": ""Follow-up/Customer Success""},{""id"": ""9"", ""label"": ""Renewal/Expansion""}]"
+23,lost_reason,Lost reason,"[{""id"": ""1"", ""label"": ""Customer Not Ready""},{""id"": ""2"", ""label"": ""Pricing Issues""},{""id"": ""3"", ""label"": ""Unreachable Customer""},{""id"": ""4"", ""label"": ""Product Mismatch""},{""id"": ""5"", ""label"": ""Duplicate Entry""}]"
