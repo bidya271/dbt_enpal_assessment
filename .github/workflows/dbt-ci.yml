@@ -51,20 +51,7 @@ jobs:
 
       - name: Write profiles.yml
         run: |
-          cat > profiles.yml <<'YML'
-          enpal_assessment_project:
-            target: dev
-            outputs:
-              dev:
-                type: postgres
-                host: localhost
-                user: admin
-                port: 5432
-                password: admin
-                dbname: postgres
-                schema: public_pipedrive_analytics
-                threads: 1
-YML
+          printf "enpal_assessment_project:\n  target: dev\n  outputs:\n    dev:\n      type: postgres\n      host: localhost\n      user: admin\n      port: 5432\n      password: admin\n      dbname: postgres\n      schema: public_pipedrive_analytics\n      threads: 1\n" > profiles.yml
 
       - name: dbt deps (if you use packages)
         run: dbt deps --profiles-dir .
@@ -123,20 +110,7 @@ YML
 
       - name: Write profiles.yml
         run: |
-          cat > profiles.yml <<'YML'
-          enpal_assessment_project:
-            target: dev
-            outputs:
-              dev:
-                type: postgres
-                host: localhost
-                user: admin
-                port: 5432
-                password: admin
-                dbname: postgres
-                schema: public_pipedrive_analytics
-                threads: 1
-YML
+          printf "enpal_assessment_project:\n  target: dev\n  outputs:\n    dev:\n      type: postgres\n      host: localhost\n      user: admin\n      port: 5432\n      password: admin\n      dbname: postgres\n      schema: public_pipedrive_analytics\n      threads: 1\n" > profiles.yml
 
       - name: dbt deps
         run: dbt deps --profiles-dir .
