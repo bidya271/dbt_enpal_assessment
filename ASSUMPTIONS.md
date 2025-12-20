@@ -19,3 +19,7 @@
     - `intermediate` and `marts` are materialized as Tables to prioritize query performance for BI tools.
     - **Future Improvement**: For high-volume production, `int_pipedrive_deal_funnel_events` is a prime candidate for an *Incremental Model* strategy, partitioning by `event_ts_utc`.
 - **Hardcoded Mappings**: Activity string matching (`LIKE '%Sales Call 1%'`) is brittle. In a production environment, we would recommend a cleaner upstream data contract (e.g., explicit `funnel_step_id` or a dedicated reference table) to avoid "magic strings" in SQL.
+
+## Pipedrive Source "Deep Dive" Findings
+- **Lost Reasons**: The `source` data contains a `lost_reason` field key (ID 23, values 1-5 like "Pricing Issues", "Customer Not Ready"). While not part of the requested Sales Funnel, a "Lost Deal Analysis" mart could easily be built by filtering `stg_deal_changes` for `changed_field_key = 'lost_reason'`.
+- **User History**: `deal_changes` also tracks `user_id` ownership changes over time. This enables "Sales Rep Attribution" reporting, which is a common "Next Step" in BI maturity (analyzing which rep *moved* a deal, not just who owns it now).

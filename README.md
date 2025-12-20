@@ -5,7 +5,7 @@ This project transforms raw Pipedrive CRM data into a clean, actionable Sales Fu
 
 The goal is to provide a robust analytics foundation that tracks deals as they move through funnel steps (Lead Generation -> Closing), handling complexities like mixed event sources (Stage Changes vs. Activities) and timezone normalization.
 
-## 🏗 Architecture & Design Logic
+## Architecture & Design Logic
 The project follows a modular "Modern Data Stack" layer approach:
 
 1.  **Staging (`models/staging`)**:
@@ -23,7 +23,7 @@ The project follows a modular "Modern Data Stack" layer approach:
     *   `rep_sales_funnel_monthly`: Aggregates the intermediate events into a monthly report.
     *   Fills in missing months (using `generate_series`) to ensure continuous reporting even for low-volume periods.
 
-## 🛠 Tech Stack & Setup
+## Tech Stack & Setup
 - **dbt Core**: Transformation & Testing.
 - **Postgres 15**: Data Warehouse (running in Docker).
 - **Docker Compose**: Container orchestration.
@@ -47,20 +47,20 @@ The project follows a modular "Modern Data Stack" layer approach:
     ```
     *(Runs seeds, models, and tests in order)*
 
-## ✅ Quality Assurance
+## Quality Assurance
 - **Testing**: 
     - Added `not_null` and `unique` constraints on all primary keys.
     - Custom Singular Test (`monthly_spike_check`) monitors data stability (alerts if month-over-month growth exceeds 500%).
 - **Documentation**: Assumes `dbt docs generate` will be part of the CI/CD pipeline.
 
-## 🚀 Scaling Thoughts
+## Scaling Thoughts
 For a production environment handling millions of rows:
 - **Incremental Models**: The intermediate layer should leverage `incremental` strategies (e.g., processing only `event_ts > max(this)`).
 - **Partitioning**: Postgres tables should be partitioned by Month for faster report generation.
 
 ---
 
-## 📝 Assessment Review Notes
+## Assessment Review Notes
 
 ### 1. Design & Architecture Decisions
 - **Layered Approach**: Strictly adhered to `Staging` (cleaning) -> `Intermediate` (logic/logic) -> `Marts` (presentation). This separation allows for easier debugging and reusability.
